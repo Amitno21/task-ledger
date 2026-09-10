@@ -1,0 +1,42 @@
+name: Daily reminder
+
+# Runs every hour and sends only to people whose chosen hour it currently is
+# in their own timezone. GitHub's cron is best-effort and can run late or be
+# skipped under load, which is why the app promises "within about half an hour".
+on:
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch:        # lets you fire one by hand to test
+    inputs:
+      force:
+        description: "Send to everyone regardless of their chosen hour"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-reminder
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: tools
+        run: npm install --no-audit --no-fund
+
+      - name: Send reminders
+        working-directory: tools
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FORCE_SEND: ${{ inputs.force }}
+        run: node send-reminders.mjs

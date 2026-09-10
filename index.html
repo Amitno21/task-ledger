@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Task Ledger</title>
+<meta name="description" content="Daily task logger for work and personal life, with priority set by rules rather than per-task judgement.">
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F6F4F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120F" media="(prefers-color-scheme: dark)">
+
+<!-- iOS home-screen behaviour -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- shown only when a backend is configured and nobody is signed in -->
+<div class="authscreen" id="authScreen" hidden>
+  <div class="authcard">
+    <h1>Daily Task Ledger</h1>
+    <p class="authnote">Sign in to keep one list across your phone and your computer.</p>
+    <label class="authfield">
+      <span>Email</span>
+      <input type="email" id="authEmail" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false">
+    </label>
+    <label class="authfield">
+      <span>Password</span>
+      <input type="password" id="authPass" autocomplete="current-password">
+    </label>
+    <p class="autherror" id="authError" role="alert"></p>
+    <div class="authbuttons">
+      <button type="button" class="btn btn-primary" id="authSignIn">Sign in</button>
+      <button type="button" class="btn" id="authSignUp">Create account</button>
+    </div>
+    <p class="authnote authfoot">First time here? Use <strong>Create account</strong> once, then sign in with the same details on your other devices.</p>
+  </div>
+</div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="greeting">
+      <span class="eyebrow" id="todayLabel"></span>
+      <h1 id="greetingLine">Hello</h1>
+      <p class="subhead" id="subheadLine"></p>
+    </div>
+    <div class="headright">
+      <div class="daymeter" id="dayMeter" hidden>
+        <svg class="ring" viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="ring-track" cx="22" cy="22" r="19"></circle>
+          <circle class="ring-fill" id="ringFill" cx="22" cy="22" r="19"></circle>
+        </svg>
+        <div class="daymeter-text">
+          <span class="count" id="ringCount">0 of 0</span>
+          <span class="label">done today</span>
+        </div>
+      </div>
+      <span class="sync" id="syncPill" data-state="wait">connecting</span>
+    </div>
+  </header>
+
+  <div class="listswitch" role="tablist" aria-label="Task list">
+    <button class="seg" role="tab" data-list="work" aria-selected="true">Work</button>
+    <button class="seg" role="tab" data-list="personal" aria-selected="false">Personal</button>
+  </div>
+
+  <div class="composer" id="composer">
+    <input type="text" id="titleInput" placeholder="What's on your mind?" aria-label="Task" autocomplete="off">
+    <select id="catInput" aria-label="Category"></select>
+    <input type="date" id="dueInput" aria-label="Due date">
+    <button type="button" class="log-btn" id="logBtn">Log it</button>
+  </div>
+  <div class="hint" id="hint"></div>
+
+  <nav class="views" role="tablist" aria-label="View">
+    <button role="tab" data-view="open" aria-selected="true">Open</button>
+    <button role="tab" data-view="log" aria-selected="false">Log</button>
+    <button role="tab" data-view="rules" aria-selected="false">Rules</button>
+  </nav>
+
+  <main id="main"></main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastText"></span>
+  <button type="button" class="toast-action" id="toastAction" hidden>Undo</button>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js")["catch"](function(){});
+  });
+}
+</script>
+</body>
+</html>
