@@ -1,8 +1,11 @@
 name: Daily reminder
 
-# Runs every hour and sends only to people whose chosen hour it currently is
-# in their own timezone. GitHub's cron is best-effort and can run late or be
-# skipped under load, which is why the app promises "within about half an hour".
+# Runs every hour and sends only to people whose chosen hour it currently is in
+# their own timezone. GitHub's timer is best-effort and can run late or skip a
+# run when busy, which is why the app promises "within about half an hour".
+#
+# Until Firebase is set up this finishes successfully with a note rather than
+# failing, so it doesn't email you every hour about something that isn't broken.
 on:
   schedule:
     - cron: "5 * * * *"
@@ -13,6 +16,11 @@ on:
         type: boolean
         default: false
 
+# The robot only needs to read this repository. It can't push, open issues,
+# or touch anything else.
+permissions:
+  contents: read
+
 concurrency:
   group: daily-reminder
   cancel-in-progress: false
@@ -20,17 +28,25 @@ concurrency:
 jobs:
   send:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
         with:
-          node-version: "20"
+          persist-credentials: false   # don't leave GitHub's access token lying in the checkout
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          package-manager-cache: false # no shared download cache to be tampered with
 
       - name: Install dependencies
         working-directory: tools
-        run: npm install --no-audit --no-fund
+        # --ignore-scripts: downloaded packages don't get to run their own code during install
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Run tests
+        working-directory: tools
+        run: npm test
 
       - name: Send reminders
         working-directory: tools
